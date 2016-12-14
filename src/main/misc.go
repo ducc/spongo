@@ -35,6 +35,10 @@ func misc() {
 				ctx.invalidArgs("`roll [max number]`\nDefault max number: `100`")
 				return
 			}
+			if max <= 0 {
+				ctx.reply("Max number must be > 0")
+				return
+			}
 		} else {
 			max = 100
 		}
@@ -52,6 +56,9 @@ func misc() {
 
 	}
 	commands["cat"] = func(ctx *context) {
+
+	}
+	commands["dog"] = func(ctx *context) {
 
 	}
 	commands["startpoll"] = func(ctx *context) {

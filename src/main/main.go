@@ -12,6 +12,13 @@ import (
 	"errors"
 	"math/rand"
 	"time"
+	"fmt"
+)
+
+const (
+	no_permission_msg = "You do not have permission to run this command! Required permission level: `%d`"
+	config_path        = "config.toml"
+	started_msg_format = "spongo running! usr: %s#%s (%s)\n"
 )
 
 type (
@@ -47,20 +54,20 @@ func (ctx *context) invalidArgs(usage string) *discordgo.Message {
 	return ctx.reply("Invalid arguments! Usage: " + usage)
 }
 
+func (ctx *context) noPermission(level int) *discordgo.Message {
+	return ctx.reply(fmt.Sprintf(no_permission_msg, level))
+}
+
 func (ctx *context) err(text string, err error) *discordgo.Message {
 	log.Println("Error during command processing,", text, err)
 	return ctx.reply("An error occured! " + text)
 }
 
-const (
-	config_path        = "config.toml"
-	started_msg_format = "spongo running! usr: %s#%s (%s)\n"
-)
-
 var (
 	conf     *config
 	localId  string
 	commands = make(map[string]command)
+	parseMentionRegex *regexp.Regexp
 	parseUserRegex *regexp.Regexp
 )
 
@@ -92,11 +99,8 @@ func main() {
 		}
 		ctx.reply(strings.TrimSuffix(buff.String(), ", "))
 	}
-	parseUserRegex, err = regexp.Compile("(.{2,32})#(\\d{4})")
-	if err != nil {
-		log.Fatal("couldnt compile regexp lol")
-		return
-	}
+	parseUserRegex, _ = regexp.Compile("(.{2,32})#(\\d{4})")
+	parseMentionRegex, _ = regexp.Compile("<@\\!?(\\d+)>")
 	err = discord.Open()
 	if err != nil {
 		log.Fatal(err)
@@ -162,25 +166,33 @@ func loadConfig(file string) (*config, error) {
 
 func parseMember(guild *discordgo.Guild, input string) (*discordgo.Member, error) {
 	var t uint8
+	var id string
 	var username string
 	var discrim string
 	if _, err := strconv.Atoi(input); err == nil {
 		t = 0
+		id = input
 	} else if !strings.Contains(input, "#") {
-		t = 1
-		username = input
+		if strings.Contains(input, "<") {
+			t = 2
+			matches := parseMentionRegex.FindAllStringSubmatch(input, -1)
+			id = matches[0][1]
+		} else {
+			t = 1
+			username = input
+		}
 	} else {
-		t = 2
+		t = 3
 		matches := parseUserRegex.FindAllStringSubmatch(input, -1)
 		username = matches[0][1]
 		discrim = matches[0][2]
 	}
 	for _, m := range guild.Members {
-		if t == 0 {
-			if m.User.ID == input {
+		if t == 0 || t == 2 {
+			if m.User.ID == id {
 				return m, nil
 			}
-		} else if (t == 2) {
+		} else if (t == 3) {
 			if m.User.Username == username && m.User.Discriminator == discrim {
 				return m, nil
 			}
@@ -210,4 +222,5 @@ func registerCommands() {
 	social()
 	misc()
 	game()
+	admin()
 }

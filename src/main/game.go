@@ -10,4 +10,10 @@ func game() {
 	commands["robloxasset"] = func(ctx *context) {
 
 	}
+	commands["minecraftplayer"] = func(ctx *context) {
+
+	}
+	commands["minecraftserver"] = func(ctx *context) {
+
+	}
 }
