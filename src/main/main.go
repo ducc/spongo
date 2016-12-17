@@ -27,6 +27,7 @@ type (
 		Shards int
 		Owner  string
 		Prefix string
+		Invite string
 	}
 
 	context struct {
@@ -213,6 +214,15 @@ func randomBool() bool {
 func randomIntInRange(min, max int) int {
 	rand.Seed(time.Now().Unix())
 	return rand.Intn(max - min) + min
+}
+
+func formatDurationString(duration time.Duration) string {
+	return fmt.Sprintf(
+		"%0.2d:%02d:%02d",
+		int(duration.Hours()),
+		int(duration.Minutes())%60,
+		int(duration.Seconds())%60,
+	)
 }
 
 func registerCommands() {

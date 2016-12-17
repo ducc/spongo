@@ -1,6 +1,12 @@
 package main
 
-import "os"
+import (
+	"os"
+	"github.com/robertkrimen/otto"
+	"strings"
+)
+
+var jsVm = otto.New()
 
 func admin() {
 	commands["admin"] = func(ctx *context) {
@@ -17,6 +23,24 @@ func admin() {
 			ctx.reply("Bye :sob:")
 			os.Exit(0)
 			break
+		case "eval": {
+			input := strings.Join(ctx.args[1:], " ")
+			jsVm.Set("ctx", ctx)
+			val, err := jsVm.Run(input)
+			if err != nil {
+				ctx.reply(err.Error())
+				break
+			}
+			if !val.IsNull() {
+				str, err := val.ToString()
+				if err != nil {
+					ctx.reply(err.Error())
+					break
+				}
+				ctx.reply(str)
+			}
+			break
+		}
 		}
 	}
 }

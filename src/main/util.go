@@ -40,4 +40,7 @@ func util() {
 	commands["directory"] = func(ctx *context) {
 
 	}
+	commands["convert"] = func(ctx *context) {
+
+	}
 }
